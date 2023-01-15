@@ -1,0 +1,1000 @@
+python.exe -m pip install --upgrade pip
+pip install ascii_magic
+pip install beautifulsoup4
+pip install requests
+
+
+#Task1
+enable IOX:
+
+enableLinuxdockersinCSR1000v
+!!
+config t
+iox
+interface GigabitEthernet1
+ip address dhcp
+ip nat outside
+no shut
+exit
+
+interface VirtualPortGroup0
+ip address 192.168.35.1 255.255.255.0
+ip nat inside
+exit
+
+ip nat inside source list GS_NAT_ACL interface GigabitEthernet1 overload
+ip access-list standard GS_NAT_ACL
+permit 192.168.0.0 0.0.255.255
+
+app-hosting appid guestshell
+ app-vnic gateway1 virtualportgroup 0 guest-interface 0
+    guest-ipaddress 192.168.35.2 netmask 255.255.255.0	
+	app-default-gateway 192.168.35.1  guest-interface 0 
+	name-server0 1.1.1.1
+ app-resource profile custom 
+   cpu 1500 
+   memory 512
+end
+
+UNANGTELNET:  guestshell enable
+2NDtELNET:    guestshell run python
+THIRDTELNET:  guestshell run bash
+
+
+ssh2 your CSR1000v twise:
+
+CSR1k#
+CSR1k#guestshell run bash
+[guestshell@guestshell ~
+
+CSR1k#guestshell run py
+CSR1k#guestshell run python
+Python 2.7.5 (default, Apr 11 2018, 07:36:10) 
+[GCC 4.8.5 20150623 (Red Hat 4.8.5-28)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> 
+>>> 
+
+]$ 
+
+ex.1: show ip int brief
+
+#!/usr/bin/env python
+import cli
+
+commands = [
+    "show ip int brief",
+]
+
+for c in commands:
+    cli.executep(c)
+	
+	
+ex.2 show version
+#!/usr/bin/env python
+import cli
+
+commands = [
+    "show version",
+]
+
+for c in commands:
+    cli.executep(c)
+	
+ex.3 show ip protocols
+
+#!/usr/bin/env python
+import cli
+
+commands = [
+    "show ip protocols",
+]
+
+for c in commands:
+    cli.executep(c)
+	
+ex.4: python configuration:
+
+#!/usr/bin/env python
+import cli
+
+rob_cm = '''hostname CSRPYTHON
+'''
+
+cli.configurep(rob_cm)
+
+ex.5: Create 4 loopbacks:
+
+import cli
+
+hi_1 = '''hostname PYDEVOP_AKO
+int loop 9
+ip add 9.9.9.9 255.255.255.255
+int loop 8
+ip add 8.8.8.8 255.255.255.255
+int loop 7
+ip add 7.7.7.7 255.255.255.255
+end
+'''
+
+cli.configurep(hi_1)
+
+ex.6
+
+TASK2: ENABLE RESTAPI: with POSTMAN:
+
+config t
+ip http secure-server
+ip http authentication local
+restconf
+netconf-yang
+end
+
+ex1:
+6 attributes about REST API:
+"CRUD" = create,read,update,Delete
+       post,get,put/patch/delete
+
+show platform software yang-management process
+
+@@@csr1000v
+config t
+!username admin privilege 15 secret pass
+ip http secure-server
+ip http authentication local
+restconf
+end
+
+@@@postman:
+type: basic Autho
+username: admin password: pass
+headers:
+	Accept: application/yang-data+json
+	Content-Type: application/yang-data+json
+
+GET:
+https://192.168.152.128/restconf/data/ietf-interfaces:interfaces
+https://192.168.152.128/restconf/data/Cisco-IOS-XE-native:native
+https://192.168.152.128/restconf/data/Cisco-IOS-XE-native:native?depth=1
+https://192.168.152.128/restconf/data/Cisco-IOS-XE-native:native?depth=2
+
+GET the hostname and version:
+https://192.168.152.128/restconf/data/Cisco-IOS-XE-native:native/version
+https://192.168.152.128/restconf/data/Cisco-IOS-XE-native:native/hostname
+
+https://192.168.152.128/restconf/data/Cisco-IOS-XE-native:native/interface/Loopback=0
+
+GET
+https://192.168.152.128/restconf/data/Cisco-IOS-XE-native:native/license
+https://192.168.152.128/restconf/data/Cisco-IOS-XE-native:native/license/udi
+
+GET all the interfaces: show ip int brief:
+
+https://192.168.152.128/restconf/data/Cisco-IOS-XE-native:native/interface
+
+GET the info on gigabitethernet=1
+
+https://192.168.152.128/restconf/data/Cisco-IOS-XE-native:native/interface/GigabitEthernet=1
+
+@@@@@@@@@@@@@@@@ PATCH @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+PATCH:
+https://192.168.152.128/restconf/data/Cisco-IOS-XE-native:native/interface/Loopback
+
+{
+  "Cisco-IOS-XE-native:Loopback": {
+    "name": 0,
+    "ip": {
+      "address": {
+        "primary": {
+          "address": "172.16.30.1",
+          "mask": "255.255.255.255"
+        }
+      }
+    }
+  }
+}
+
+
+
+
+=================================
+Module to configure interface
+=================================
+
+
+Configure the interface Loopback0
+PUT:
+https://192.168.152.128/restconf/data/Cisco-IOS-XE-native:native/interface/Loopback=0
+
+{
+  "Cisco-IOS-XE-native:Loopback": {
+    "name": 0,
+    "ip": {
+      "address": {
+        "primary": {
+          "address": "172.16.30.1",
+          "mask": "255.255.255.255"
+        }
+      }
+    }
+  }
+}
+
+=================================
+
+Configure the lan interface (G1)
+=================================
+
+https://{{host}}:{{port}}/restconf/data/Cisco-IOS-XE-native:native/interface/GigabitEthernet=1
+
+{
+    "Cisco-IOS-XE-native:GigabitEthernet": {
+        "name": "1",
+        "description": "## LAN ##",
+        "ip": {
+            "address": {
+                "primary": {
+                    "address": "192.168.40.1",
+                    "mask": "255.255.255.0"
+                }
+            }
+        },
+        "Cisco-IOS-XE-ethernet:negotiation": {
+            "auto": true
+        }
+    }
+}
+
+
+
+=================================
+Configure eigrp
+=================================
+
+{
+    "Cisco-IOS-XE-eigrp:router-eigrp": {
+        "eigrp": {
+            "named-mode": [
+                {
+                    "name": "CCIE",
+                    "address-family": {
+                        "ipv4": {
+                            "af-ipv4": [
+                                {
+                                    "unicast": "unicast",
+                                    "autonomous-system": 63004,
+                                    "network": {
+                                        "address-wildcard": [
+                                            {
+                                                "ipv4-address": "172.16.30.2",
+                                                "wildcard": "0.0.0.0"
+                                            },
+                                            {
+                                                "ipv4-address": "192.168.0.0",
+                                                "wildcard": "0.0.255.255"
+                                            }
+                                        ]
+                                    },
+                                    "topology": {
+                                        "topo-base": [
+                                            {
+                                                "topology-base": "base"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}
+
+
+Task2: PYTHON AND JSON CRASHCOURSE:
+
+Lowercase letters (a to z)
+Uppercase letters (A to Z)
+Digits (0 to 9)
+Underscore (_)
+
+Good Examples:
+
+myVar
+var_3
+this_works_too
+_9lives
+lives9
+
+Bad Examples: ! @ # $ % 0-9
+
+9lives, @lives, $lives, %badsample, !badsamp.
+
+TASK2: What needs to get into your head?
+
+VARIABLES:
+DATA TYPES:
+OPERATIONS:
+FUNCTIONS:
+LOOPS:
+CONDITIONAL STATEMENTS:
+
+task2.1: Variables test
+
+x = 5
+y = "John"
+print(x)
+print(y)
+
+Variables are changing top down:
+
+x = 4 # x is of type int
+print(x)
+x = "Sally" # x is now of type str
+print(x)
+
+Output Variables:
+
+print state is often used to output variables
+To combine both text and a variable, Python uses the + character:
+
+x = "Data Science with R"
+print("Python is used for " + x)
+
+x = "Python is "
+y = "awesome"
+z =  x + y
+print(z)
+
+x = 5
+y = "John"
+print(x + y)
+Why error?
+
+TASK3: LEARNING DATATYPES:
+
+Overview of datatypes:
+
+Strings:
+
+Integers:
+
+Floating-PointNumbers:
+
+Complex Numbers:
+
+Boolean Types:
+
+task3.1: working with strings:
+
+print("I am a string.")
+I am a string.
+type("I am a string.")
+<class 'str'>
+
+print('I am too.')
+I am too.
+type('I am too.')
+<class 'str'>
+
+print('This string contains a single quote (\') character.')
+This string contains a single quote (') character
+
+print("This string contains a double quote (\") character.")
+
+#yourname.py
+name = input("type your name below:")
+print ("hi ", name)
+
+#more String Example:
+adjective = input('Describe Yourself?: ')
+noun = input('What is your nick name?: ')
+verb = input('What is your favorite hobby?: ')
+often = input('How often is your hobby done?: ')
+print('Your Habit is:')
+print('The', adjective, noun, 'likes',verb, often + '.')
+
+##With Extra Sauce:
+adjective = input('Describe Yourself?: ')
+noun = input('What is your nick name?: ')
+verb = input('What is your favorite hobby?: ')
+often = input('How often is your hobby done?: ')
+print('Your Habit is:')
+print('The', adjective, noun, 'likes',verb, often + '.')
+
+How to string it:
+
+#more String Example: intergers to string
+pi = 3.141617232424
+str(pi)
+print("My atm pin is: " + str(pi))
+print("Ay Mali Six Digits pala...eheheh")
+print("My atm pin is: " + str(pi)[0:7])
+
+Task3.2: working with internet types:
+
+INTEGERS:
+
+a= 100
+b= 32678
+print(a,b)
+print ("a is ",type(a), "b is also",type(b))
+
+BINARY:
+
+bin = 0b11110000
+print(bin)
+
+HEX:
+hex = 0xf0
+print(hex)
+
+FLOATING POINT: EXPONENTS:
+
+print(2e0)
+print(2e1)
+print(2e2)
+print(2e3)
+
+COMPLEX numbers: not used much in python:
+
+a= 2 + 5j
+b = 4-2j
+c = a + b
+print(c)
+
+LIST type:
+
+rcolors = ["pink","orange","yellow","green","blue","indigo","violet"]
+print("the 1st color of the rainbow is",rcolors[0])
+print("Ay mali, Red pala...sorry, lets edit")
+rcolors.remove("pink")
+rcolors.insert(0,"red")
+print("Finally, the 1st color of the rainbow is",rcolors[0])
+
+Python dictionary is an unordered collection of items. 
+While other compound data types have only value as an element, 
+a dictionary has a key: value pair.
+
+globe = {"autoload10":10,"autoload25":25,"autoload50":50,"autoload150":150}
+print("globe has ",len(globe)," autoload choices!,pili na!")
+print("ito ay:",globe)
+print("we can add autoload75!")
+globe["autoload75"]=75
+print("The modified autoload is",globe)
+
+dict.clear(globe)
+
+TASK4:  BASIC PYTHON OPERATIONS:
+
+Arithmetic(math)
+
+Assigment
+
+Relational/Comparison
+
+Logical
+
+Identity
+
+Bitwise
+
+Membership
+
+aka " I r-a-m-b-l-a "
+
+Task4.1: 
+
+BOdMAS:
+
+() **  *  /  + S
+
+2 * 5 - 1
+vs
+2 * (5-1)
+
+add=1+3
+sub=10-4
+mul=4*2
+div=10/2
+exp=2**3
+mod=16%5  #gets the remainder of a number!
+flodiv=17//5
+print(add)
+print(sub)
+print(mul)
+print(div)
+print(exp)
+print(mod)
+print(flodiv)
+
+doing in maths example:
+Health game Example:
+
+hp = 45, game level: easy, med, hard.
+
+import random
+
+potionhealth = random.randint(25,50)
+health = 50
+
+
+
+###How to save and invest your Money From your Sweldo###
+##20% should go to your savings.,10%Happy Accountt, 15% Investment Account
+
+# ThousandNaire.py – How to save to be a thousandNaire
+
+# Ask the person how many pizzas they want, get the # with eval()
+Whatis_Salary = eval( input("Magkano ang sweldo mo?: ") )
+
+# Savings account must get at least 20%
+Save_Acct = Whatis_Salary * 0.2
+
+# Entertainment account must not be more than 10%, Higher if 35 and above!
+Ent_Acct = Whatis_Salary * 0.1
+
+# Investment Account should 15% of your Income:
+Inv_Acct = Whatis_Salary * 0.15
+
+# 3% Must go to the Universe Account: Attract wealth!
+Uni_Acct = Whatis_Salary * 0.03
+
+# Print the resuls:
+print("Save mo sa banko ang 20 Percent", Save_Acct ,"from your ", Whatis_Salary )
+print("Pwede IwalDas ang ", Ent_Acct ,"pang Gimik")
+print("Invest mo sa Stocks/Forex is ", Inv_Acct )
+print("Donate of sa Charity ang amount,para swertehin ", Uni_Acct )
+
+@TASK5: GUI:
+
+EX1:
+from tkinter import *
+
+#create window object
+app = Tk()
+
+#part
+part_text = StringVar()
+part_label = Label(app, text='Part Name'), 
+
+app.title('simple python Gui')
+app.geometry('700x400')
+
+#start program
+app.mainloop()
+
+EX2:
+from tkinter import *
+window = Tk()
+window.title("PWEDE AKO MAGING DEVOPS")
+window.geometry('555x350')
+lbl = Label(window, text="Hello")
+lbl.grid(column=0, row=0)
+txt = Entry(window,width=10)
+txt.grid(column=1, row=0)
+def clicked():
+    res = "Welcome to " + txt.get()
+    lbl.configure(text= res)
+btn = Button(window, text="Click Me", command=clicked)
+btn.grid(column=2, row=0)
+window.mainloop()
+
+TASK5:
+TASK6: CONDITIONAL STATEMENTS: if and then statements are use to perform actions based
+on if it is true or false.
+
+if(Condition1):
+      Indented statement block for Condition1
+elif(Condition2):
+       Indented statement block for Condition2
+else:
+       Alternate statement block if all condition check above fails
+
+example1:
+
+#little bata:
+answer = eval(input("what is your age 10 years ago?:"))
+def your_choice(answer):
+	if answer > 7:
+	  print("di ka na bata!")
+	elif answer <= 7 and answer > 1:
+	  print("little bata ka pa!")
+	else:
+	  print("sangol/baby ka pa,pano ka naka type?")
+print(your_choice(answer))
+
+replace, print with return:
+
+#little bata:
+answer = eval(input("what is your age 10 years ago?:"))
+def your_choice(answer):
+	if answer > 7:
+	  return("di ka na bata!")
+	elif answer <= 7 and answer > 1:
+	  return("little bata ka pa!")
+	else:
+	  return("sangol/baby ka pa,pano ka naka type?")
+print(your_choice(answer))
+
+example1-1:
+# WhatsMyGrade.py
+grade = eval(input("Enter your number grade (0-100): "))
+if grade >= 92:
+    print("Ikaw are isang Alamat!!! :) ")
+elif grade >= 85:
+    print("Pasok ka sa Smart na grupo!aral pa.")
+elif grade >= 80:
+    print("Ikaw ay isang MEH/Pasado na student")
+elif grade >= 70:
+    print("Welcome to PalaKol or syete group")
+elif grade >= 60:
+    print("BopolS!!!")
+else:
+    print("Super Bopols BOBO!. :( ")
+	
+Example1-3:
+# WhatToWear.py
+rainy = input("Ulan ba sa labas? Malamig din ba? (y/n)").lower()
+cold = input("super lamig ba? (y/n)").lower()
+if (rainy == 'y' and cold == 'y'):      # Rainy and cold, yuck!
+    print("Mag payong at jacket ka!.")
+elif (rainy == 'y' and cold != 'y'):    # Rainy, but warm
+    print("Mag Payong ka lang.")
+elif (rainy != 'y' and cold == 'y'):    # Dry, but cold
+    print("Mag Jacket ka lang!")
+elif (rainy != 'y' and cold != 'y'):    # Warm and sunny, yay!
+    print("Mag Tshirt ka na lang or walang sulot, ehehhey")
+
+
+TASK7: FOR AND WHILE LOOPS:
+
+EX1:
+For and While:
+# SayOurNames.py - lets everybody print their name on the screen
+# Ask the user for their name
+name = input("What is your name? ")
+# Keep printing names until we want to quit
+# "" is empty string
+while name != "":
+    # Print their name 100 times
+    for x in range(100):
+        # Print their name followed by a space, not a new line
+        print(name, end = " ")
+    print()   # After the for loop, skip down to the next line
+    # Ask for another name, or quit
+    name = input("Type another name, or just hit [ENTER] to quit: ")
+print("Thanks for playing!")
+
+EX2:
+ExtraChallenge using Empty List:
+# SpiralFamily.py - prints a colorful spiral of names
+import turtle     # Set up turtle graphics
+t = turtle.Pen()  
+turtle.bgcolor("black")
+colors = ["red", "yellow", "blue", "green", "orange",
+        "purple", "white", "brown", "gray", "pink" ]
+family = []       # Set up an empty list for family names
+# Ask for the first name
+name = turtle.textinput("My family",
+                        "Enter a name, or just hit [ENTER] to end:")
+# Keep asking for names
+while name != "":
+    # Add their name to the family list
+    family.append(name)
+    # Ask for another name, or end
+    name = turtle.textinput("My family",
+                        "Enter a name, or just hit [ENTER] to end:")
+# Draw a spiral of the names on the screen
+for x in range(100):
+    t.pencolor(colors[x%len(family)]) # Rotate through the colors
+    t.penup()                         # Don't draw the regular spiral lines
+    t.forward(x*4)                    # Just move the turtle on the screen
+    t.pendown()                       # Draw the next family member's name
+    t.write(family[x%len(family)], font = ("Arial", int((x+4)/4), "bold") )
+    t.left(360/len(family) + 2)         # Turn left for our spiral
+
+TASK8.0: FUNCTIONS:
+
+EX8.1:
+import os
+def Dito_ka():
+    cwd = os.getcwd()
+    print("Current working Directory: ", cwd)
+
+def Atras_ka():
+    os.chdir("../")
+
+def disp_dir(directory):
+    with os.scandir(directory) as entries:
+        for i in entries:
+            print(entry.name)
+
+
+if __name__ == "__main__":
+    display_cwd()
+    #up_one_dir()
+    display_cwd()
+    disp_dir()
+
+
+eX8.2
+import os
+import shutil
+
+path = input("Enter Path: ")
+# create variable of files to hold the location
+files = os.listdir(path)
+
+#this will look/read all the files in the directory
+for file in files:
+    #separate the filename from the extension.
+    filename,extension = os.path.splitext(file)
+    #remove the .ext thru slicing
+    extension = extension[1:]
+    #if the extensionDir exist, move the file to that directory.
+    if os.path.exists(path+'/'+extension):
+        shutil.move(path+'/'+file, path+'/'+extension+'/'+file)
+    #we make a new directory, and Move a file to into it
+    else:
+        os.makedirs(path+'/'+extension)
+        shutil.move(path+'/'+file, path+'/'+extension+'/'+file)
+
+eX.8.3:
+#install ascii_magic or karton-asciimagic
+import ascii_magic
+output = ascii_magic.from_image_file("mb.jpg",columns=200,char="#")
+ascii_magic.to_terminal(output)
+
+eX.8.4:
+import requests
+import string
+from bs4 import BeautifulSoup
+
+Enter_input = input("Ano Hanap mo?: ")
+u_i = string.capwords(Enter_input)
+lists = u_i.split()
+word = "_".join(lists)
+
+url = "https://en.wikipedia.org/wiki"+word
+
+def wikibot(url):
+    url_open =requests.get(url)
+    soup = BeautifulSoup(url_open.content,'html.parser')
+    details =soup('table',{'class':'infobox'})
+    for i in details:
+        h =i.find_all('tr')
+        for j in h:
+            heading = j.find_all('th')
+            detail = j.find_all('td')
+            if heading is not None and detail is not None:
+                for x,y in zip(heading,detail):
+                    print("{} :: {}".format(x.text,y.text))
+                    print("-------------------")
+    for i in range(1,3):
+        print(soup('p')[i].text)
+wikibot(url)
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[ ] Open pycharm 
+[ ] Create a file
+file name: Testing python.py
+you_can_put_whatever_you_want = 'name'
+print('hello ' + you_can_put_whatever_you_want)
+
+
+[ ] Create a new file : MyFirstProgram.py
+name = 'adam'
+classmate = input('what is the classmate name? ')
+print('Hi '+name)
+print('Your classmate is: '+classmate)
+
+
+[ ] Must pingable: switch and pc
+[ ] Create a new file: AUTOchangeHOSTNAME.py
+import telnetlib
+
+switch_ip = input('What is the switch IP address? ')
+change_hostname = input('What will be the hostname? ')
+
+tn = telnetlib.Telnet(switch_ip)
+tn.write(b'pass\n')
+tn.write(b'enable\n')
+tn.write(b'pass\n')
+tn.write(b'conf t\n')
+tn.write(b'hostname '+change_hostname.encode('ascii')+b'\n') #TAKE-NOTE
+tn.write(b'end\n')
+tn.write(b'exit\n')
+tn.close()
+
+de = tn.read_all().decode('ascii')
+print(de)
+
+TASK 4. Automate CUCM
+[ ] Must be able to ping CUCM from pc
+[ ] create a new file : AUTOchangeNUMBERS.py
+import telnetlib
+
+host = input("What is the IP of the CUCM?: ")
+monitor = input("What is the first 2 digits?: ")
+phone_mac_address = "2C54.2D0E.FD11" #MAC-ADDRESS OF PHONE, THIS FORMAT
+phone2_mac_address = "CCD8.C1FB.17B3" #MAC-ADDRESS OF PHONE, THIS FORMAT
+
+tn = telnetlib.Telnet(host)
+tn.write(b'pass\n')
+tn.write(b'enable\n')
+tn.write(b'pass\n')
+tn.write(b'conf t\n')
+tn.write(b"no telephony-service \n")
+tn.write(b"telephony-service \n")
+tn.write(b"no auto assign \n")
+tn.write(b"no auto-reg-ephone \n")
+tn.write(b"max-ephones 5 \n")
+tn.write(b"max-dn 20 \n")
+
+tn.write(b"ip source-address "+host.encode('ascii')+ b" port 2000 \n")
+tn.write(b"create cnf-files \n")
+tn.write(b"ephone-dn 1 \n")
+tn.write(b"number " +monitor.encode('ascii')+ b"59 \n")
+tn.write(b"ephone-dn 2 \n")
+tn.write(b"number " +monitor.encode('ascii')+ b"60 \n")
+tn.write(b"ephone-dn 3 \n")
+tn.write(b"number " +monitor.encode('ascii')+ b"61 \n")
+tn.write(b"ephone-dn 4 \n")
+tn.write(b"number " +monitor.encode('ascii')+ b"62 \n")
+tn.write(b"ephone-dn 5 \n")
+tn.write(b"number " +monitor.encode('ascii')+ b"63 \n")
+tn.write(b"ephone-dn 6 \n")
+tn.write(b"number " +monitor.encode('ascii')+ b"64 \n")
+tn.write(b"ephone-dn 7 \n")
+tn.write(b"number " +monitor.encode('ascii')+ b"65 \n")
+tn.write(b"ephone-dn 8 \n")
+tn.write(b"number " +monitor.encode('ascii')+ b"66 \n")
+tn.write(b"exit \n")
+
+tn.write(b"ephone 1 \n")
+tn.write(b"mac-address " +phone_mac_address.encode('ascii')+ b"\n")
+tn.write(b"type 8941 \n")
+tn.write(b"button 1:1 2:2 3:3 4:4 \n")
+tn.write(b"restart \n")
+tn.write(b"ephone 2 \n")
+tn.write(b"mac-address " +phone2_mac_address.encode('ascii')+ b" \n")
+tn.write(b"type 8945 \n")
+tn.write(b"button 1:8 2:7 3:6 4:5 \n")
+tn.write(b"restart \n")
+tn.write(b"end \n")
+
+de = tn.read_all().decode('ascii')
+print(de)
+print("end of automation")
+tn.close()
+
+Task 5.  Create simple JSON
+[ ] Create a new json file: StudentNames.json #IMPORTANT MUST BE .JSON
+Only works with ‘ ‘ single quote
+Last item should not have a , comma
+{
+'Monitor_11' : 'ENTER STUDENT NAME',
+'Monitor_12' : 'ENTER STUDENT NAME',
+'Monitor_21' : 'ENTER STUDENT NAME',
+'Monitor_22' : 'ENTER STUDENT NAME',
+'Monitor_31' : 'ENTER STUDENT NAME'
+}
+
+Task 6.  Run simple JSON in python
+[ ] create a new python file: JSONandPYTHON.py  
+import json
+with open('StudentNames.json') as f:
+    myJSON = json.load(f) #INDENTED
+
+print(myJSON)
+print(myJSON['Monitor_22']) #NAME YOU WANT
+
+
+Task 7.  Use JSON for config
+[ ] create a json file: Options.json
+{
+'Hostname1' : 'ENTER STUDENT NAME',
+'Hostname2' : 'ENTER STUDENT NAME',
+'Hostname3' : 'ENTER STUDENT NAME'
+}
+
+[ ] create a python file: JSONandPYTHON.py
+import json
+import telnetlib
+
+with open('myfirstdatabase.json') as f:
+     mydatabase = json.load(f)
+
+switch_ip = input('What is the switch IP address? ')
+change_hostname = mydatabase['Hostname2'] OPTION WHAT YOU WANT FROM JSON CASE SENSITIVE
+
+tn = telnetlib.Telnet(switch_ip)
+tn.write(b'pass\n')
+tn.write(b'enable\n')
+tn.write(b'pass\n')
+tn.write(b'conf t\n')
+tn.write(b'hostname '+change_hostname.encode('ascii')+b'\n') #TAKE-NOTE
+tn.write(b'end\n')
+tn.write(b'exit\n')
+tn.close()
+
+de = tn.read_all().decode('ascii')
+print(de)
+
+
+
+
+###########################
+
+ciscojs1.py
+import telnetlib
+import json
+
+with open('cisco1.json') as f:
+    data = json.load(f)
+
+for entry in data['router']:
+    host_ip = entry['host_ip']
+    username = entry['username']
+    password = entry['password']
+    hostname = entry['hostname']
+
+    tn = telnetlib.Telnet(host_ip)
+
+    tn.read_until(b"Username: ")
+    tn.write(username.encode('ascii') + b"\n")
+    if password:
+        tn.read_until(b"Password: ")
+        tn.write(password.encode('ascii') + b"\n")
+
+    tn.write(b"enable\n")
+    tn.write(b"pass\n")
+    tn.write(b"conf t\n")
+    tn.write(b"hostname " + hostname.encode('ascii') + b"\n")
+
+    lo_number = 1
+    for interface in entry['lo_interfaces']:
+        tn.write(b"no int lo " + str(lo_number).encode('ascii') + b"\n")
+        tn.write(b"int lo" + str(lo_number).encode('ascii') + b"\n")
+        tn.write(b"ip add " + interface.encode('ascii') + b" 255.255.255.0\n")
+        tn.write(b"no shut\n")
+        lo_number = lo_number + 1
+
+    tn.write(b"end\n")
+    tn.write(b"exit\n")
+    print(tn.read_all().decode('ascii'))
+    tn.close()
+
+f.close()
+
+
+cisco1.json
+{
+ "router": [
+  {
+     "host_ip": "192.168.1.79",
+     "hostname": "CiscoAuto1",
+	 "username": "admin",
+	 "password": "pass",
+     "lo_interfaces": ["1.1.1.1","2.2.2.2","3.3.3.3"]
+  },
+   {
+     "host_ip": "192.168.1.80",
+     "hostname": "CiscoAuto2",
+	 "username": "admin",
+	 "password": "pass",
+     "lo_interfaces": ["4.4.4.4","5.5.5.5","6.6.6.6"]
+  }
+ ]
+}
+
