@@ -1,0 +1,317 @@
+Day3 Network Engineer
+Task1: Review of Routing FUndamentals.
+rule: ping dikit, no dikit, no ping
+r1 to r4: ospf 1:
+config t
+ no router ospf 1
+ do sh ip protocols
+
+R4
+config t
+ no router eigrp 100
+ Task1: LoadBalacing DHCP Server:
+ D1:
+CONFIG T
+ip dhcp excluded-add 10.2.1.1 10.2.1.99
+ip dhcp excluded-add 10.2.1.200 10.2.1.254
+!
+ip dhcp pool vlan10
+  network 10.2.1.0 255.255.255.0
+  default-router 10.2.1.254
+!
+D2:
+CONFIG T
+ip dhcp excluded-add 10.2.1.1 10.2.1.199
+ip dhcp excluded-add 10.2.1.250 10.2.1.254
+!
+ip dhcp pool vlan10
+  network 10.2.1.0 255.255.255.0
+  default-router 10.2.1.254
+!
+A1: lipat vlan from v1 to v10
+config t
+int e0/0
+ switchport mode access
+ switchport access vlan 10
+A2:
+config t
+int e1/0
+ switchport mode access
+ switchport access vlan 10
+p1:
+config t
+int e0/0
+ ip add dhcp
+ no shut
+p2:
+config t
+int e1/0
+ ip add dhcp
+ no shut
+
+Pano mag static Route sa PC:
+cmd
+route  add 10.m.0.0 mask 255.255.0.0 10.m.1.4 -p
+
+How to StaticRoute Cisco/PC/EndDevices:
+p1:
+config T
+ip route 0.0.0.0  0.0.0.0 10.2.1.1
+do sh ip route static
+
+p2:
+config T
+ip route 0.0.0.0  0.0.0.0 10.2.1.2
+do sh ip route static
+
+D1:
+config t
+router eigrp 100
+ no auto-summary
+ network 10.1.4.4 0.0.0.3
+ network 10.2.1.0 0.0.0.255
+ network 10.2.2.0 0.0.0.255
+ network 192.168.1.128 0.0.0.31
+end
+
+or NEXUS-like
+
+conf t
+	router eigrp CCNPLEVEL
+		address-family ipv4 unicast autonomous-system 100
+		network 10.1.4.6 0.0.0.0
+		network 10.2.1.1 0.0.0.0
+		network 10.2.2.1 0.0.0.0
+		network 192.168.1.129 0.0.0.0
+		end
+
+
+D2:
+config t
+router eigrp 100
+ no auto-summary
+ network 10.1.4.8 0.0.0.3
+ network 10.2.1.0 0.0.0.255
+ network 10.2.2.0 0.0.0.255
+ network 192.168.1.128 0.0.0.31
+end
+show ip eigrp neighbor
+
+or NEXUS-like
+
+conf t
+	router eigrp CCNPLEVEL
+		address-family ipv4 unicast autonomous-system 100
+		network 10.1.4.10 0.0.0.0
+		network 10.2.1.2 0.0.0.0
+		network 10.2.2.2 0.0.0.0
+		network 192.168.1.130 0.0.0.0
+		end
+	sh ip eigrp nei
+
+R4:
+config t
+router eigrp 100
+ no auto-summary
+ network 10.1.4.8 0.0.0.3
+ network 10.1.4.4 0.0.0.3
+ end
+
+!!Multi Area OSPF FOR nETWOR eNGINEERS:
+OSPF NETWORK:
+R4:
+config t
+Int loopback 0
+ ip add 4.4.4.4 255.255.255.255
+router ospf 1
+router-id 4.4.4.4
+network 4.4.4.4 0.0.0.0 area 34
+network 10.1.1.8 0.0.0.3 area 34
+
+R3:
+config t
+Int loopback 0
+ ip add 3.3.3.3 255.255.255.255
+router ospf 1
+router-id 3.3.3.3
+network 3.3.3.3 0.0.0.0 area 0
+router ospf 1
+network 10.1.1.4 0.0.0.3 area 0
+network 10.1.1.8 0.0.0.3 area 34
+
+R2:
+config t
+Int loopback 0
+ ip add 2.2.2.2 255.255.255.255
+router ospf 1
+router-id 2.2.2.2
+network 2.2.2.2 0.0.0.0 area 0
+router ospf 1
+network 10.1.1.4 0.0.0.3 area 0
+network 10.1.1.0 0.0.0.3 area 12
+
+R1:
+config t
+Int loopback 0
+ ip add 1.1.1.1 255.255.255.255
+router ospf 1
+router-id 1.1.1.1
+network 1.1.1.1 0.0.0.0 area 12
+router ospf 1
+network 10.1.1.0 0.0.0.3 area 12
+
+OSPF checking:
+sh ip protocols
+sh ip ospf neighbor
+sh ip ospf database
+
+Task3: Eigrp and Ospf Redistribution:
+R4: sikat: Eigrp and OSPF world:
+config T
+router eigrp 100
+redistribute ospf 1 metric 10000 100 255 1 1500
+ exit
+router ospf 1
+redistribute eigrp 100 subnets
+end
+
+TASK9.3: BASIC eBGP FOR ISPS and R1.
+R1 BGP:
+config t
+router bgp 1
+ bgp log-neighbor-changes
+ neighbor 208.8.8.4 remote-as 45
+ neighbor 207.7.7.2 remote-as 2
+ neighbor 209.9.9.3 remote-as 3
+ network 10.0.0.0 Mask 255.255.255.252
+ network 207.7.7.0
+ network 208.8.8.0
+ network 209.9.9.0
+end
+@@@ISP1:
+CONFIG T
+router bgp 45
+bgp log-neighbor-changes
+neighbor 24.2.4.2 remote-as 2
+neighbor 45.4.5.5 remote-as 45
+neighbor 208.8.8.1 remote-as 1
+network 208.8.8.0
+network 24.2.4.0 mask 255.255.255.0
+network 44.44.44.44 mask 255.255.255.255
+network 45.4.5.0 mask 255.255.255.0
+!PretentInternet
+network 0.0.0.0
+ip route 0.0.0.0 0.0.0.0 null 0
+ip route 10.0.0.0 255.0.0.0 208.8.8.1
+end
+
+@@@ISP2:
+config t
+router bgp 2
+bgp log-neighbor-changes
+neighbor 24.2.4.4 remote-as 45
+neighbor 25.2.5.5 remote-as 45
+neighbor 32.3.2.3 remote-as 3
+neighbor 207.7.7.1 remote-as 1
+network 207.0.0.0
+network 22.22.22.22 mask 255.255.255.255
+network 24.2.4.0 mask 255.255.255.0
+network 25.2.5.0 mask 255.255.255.0
+network 32.3.2.0 mask 255.255.255.0
+!fakeInternet
+network 0.0.0.0
+ip route 0.0.0.0 0.0.0.0 null 0
+ip route 10.0.0.0 255.0.0.0 207.7.7.1
+end
+@@ISP3:
+CONFIG T
+router bgp 3
+bgp log-neighbor-changes
+neighbor 32.3.2.2 remote-as 2
+neighbor 35.3.5.5 remote-as 45
+neighbor 209.9.9.1 remote-as 1
+network 209.9.9.0
+network 32.3.2.0 mask 255.255.255.0
+network 33.33.33.33 mask 255.255.255.255
+network 35.3.5.0 mask 255.255.255.0
+network 0.0.0.0
+ip route 0.0.0.0 0.0.0.0 null 0
+ip route 10.0.0.0 255.0.0.0 209.9.9.1
+end
+
+Isp4:
+config t
+int lo 8
+ ip add 8.8.8.8 255.255.255.255
+router bgp 45
+ bgp log-neighbor-changes
+ neighbor 25.2.5.2 remote-as 2
+ neighbor 35.3.5.3 remote-as 3
+ neighbor 45.4.5.4 remote-as 45
+ network 8.8.8.8 mask 255.255.255.255
+ network 55.55.55.55 mask 255.255.255.255
+ network 25.2.5.0 mask 255.255.255.0
+ network 35.3.5.0 mask 255.255.255.0
+ network 45.4.5.0 mask 255.255.255.0
+end
+
+TASK4: WHY OSPF AND BGP ARE BEST FRIENDS:
+OSPF can Inject all BGP routes int ONE ospf route: O*E2
+R1:
+CONFIG t
+router ospf 1
+Default-Information Originate
+
+r4:ping 8.8.8.8
+p1:ping 8.8.8.8
+
+TASK5: ROUTING: static,eigrp,ospf,BGP vs
+       TUNNELING: VPN:
+@VPNJP:
+config T
+no logging console
+no ip domain-lookup
+int gi 1
+ip add dhcp
+no shut
+int gi 2
+ip add dhcp
+no shut
+int gi3
+ip add 10.10.10.1 255.255.255.0
+no shut
+@VPNphp:
+config T
+no logging console
+no ip domain-lookup
+int gi 1
+ip add dhcp
+no shut
+int gi 2
+ip add dhcp
+no shut
+int gi3
+ip add 10.20.20.1 255.255.255.0
+no shut
+
+TASK6: LALABASA SA EXAM NYO SA FEB/MARCH
+HOW TO CONFIGURE SSHv2. or SecureShell
+both: vpnJP/vpnPH:
+config T
+ip domain-name rivanit.com
+crypto key generate rsa
+ip ssh version 2
+
+SITE TO SITE VPN:
+vpn = Hash(protect Orig Data) = sha256/sha1/md5 
+      +  Encryption(Hide the Data anybody!
+        AES: Advanced Encryption Standard
+        DES: digital Enc Standard
+        RSA : rivest,shaMir,Adelman) 
+        IPSEC: 
+         + Tunnel: hIDE your IPAddress
+            PPTP, L2TP, GRE, ipsec
+Howt to configure Site 2 site VPN JP to PH:
+https://
+
+TASK6: FUndamentals of Cisco network Security:
